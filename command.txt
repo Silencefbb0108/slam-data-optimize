@@ -1,0 +1,9 @@
+g++ test.cpp `pkg-config opencv --libs --cflags opencv` -o test
+./test
+
+gcc -o hello hello.cpp -L /usr/lib/x86_64-linux-gnu/ -lcairo -I /usr/include/cairo
+
+find /usr/include -name cairo.h
+find /usr/local/include -name cairo.h
+find /usr/lib -name *cairo*
+g++ test_f4_path1106-4.cpp `pkg-config opencv --libs --cflags opencv` -o test_f4_path1106-4 -I/usr/include/cairo -L/usr/lib/x86_64-linux-gnu -lcairo
