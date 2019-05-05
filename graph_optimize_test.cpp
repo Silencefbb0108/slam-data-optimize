@@ -208,7 +208,6 @@ cv::Mat thinImage(const cv::Mat & src, const int maxIterations = -1) {
             }
         }
     }
-    }
     //imshow("res", res);
 
     cv::Mat res2 = cv::Mat::zeros(src.rows, src.cols, CV_8UC1);
@@ -526,19 +525,19 @@ cv::Mat Geo_area(int* data, int width, int height, int* path_x, int* path_y, int
        for(int i = 0; i < zoom.rows; ++i) {
            for(int j = 0; j < zoom.cols; ++j) {
                if(zoom.at<uchar>(i, j) < 80) { //墙内
-                  color_map.at<cv::Vec3b>(i, j)[0] = 245;
-	          color_map.at<cv::Vec3b>(i, j)[1] = 81;
-	          color_map.at<cv::Vec3b>(i, j)[2] = 116;
+                  color_map.at<cv::Vec3b>(i, j)[0] = 143;
+	          color_map.at<cv::Vec3b>(i, j)[1] = 255;
+	          color_map.at<cv::Vec3b>(i, j)[2] = 206;
                }
                else if(zoom.at<uchar>(i, j) > 100) { //墙外
-                  color_map.at<cv::Vec3b>(i, j)[0] = 241;
-	          color_map.at<cv::Vec3b>(i, j)[1] = 119;
-	          color_map.at<cv::Vec3b>(i, j)[2] = 160;
+                  color_map.at<cv::Vec3b>(i, j)[0] = 255;
+	          color_map.at<cv::Vec3b>(i, j)[1] = 255;
+	          color_map.at<cv::Vec3b>(i, j)[2] = 255;
                }
                else { //墙体
-                  color_map.at<cv::Vec3b>(i, j)[0] = 247;
-	          color_map.at<cv::Vec3b>(i, j)[1] = 167;
-	          color_map.at<cv::Vec3b>(i, j)[2] = 205;
+                  color_map.at<cv::Vec3b>(i, j)[0] = 116;
+	          color_map.at<cv::Vec3b>(i, j)[1] = 255;
+	          color_map.at<cv::Vec3b>(i, j)[2] = 195;
                }
            }
        }
@@ -555,9 +554,9 @@ cv::Mat Geo_area(int* data, int width, int height, int* path_x, int* path_y, int
 
 	src3 = ~src3; //墙内为255，墙体和墙外为0
         //imshow("src", src3);
-        cv::Mat element0 = getStructuringElement(cv::MORPH_RECT, cv::Size(3, 3));
-        erode(src3, src3, element0);
-	dilate(src3, src3, element0);
+        //cv::Mat element0 = getStructuringElement(cv::MORPH_RECT, cv::Size(3, 3));
+        //erode(src3, src3, element0);
+	//dilate(src3, src3, element0);
         //imshow("src2", src3);
 
 	cv::Mat labels2, stats2, centroids2;
@@ -824,19 +823,19 @@ cv::Mat Geo_area(int* data, int width, int height, int* path_x, int* path_y, int
                 }*/
 
                 if(zoom3.at<uchar>(i, j) < 80) { //墙内
-                   color_map3.at<cv::Vec3b>(i, j)[0] = 245;
-	           color_map3.at<cv::Vec3b>(i, j)[1] = 81;
-	           color_map3.at<cv::Vec3b>(i, j)[2] = 116;
+                   color_map3.at<cv::Vec3b>(i, j)[0] = 143;
+	           color_map3.at<cv::Vec3b>(i, j)[1] = 255;
+	           color_map3.at<cv::Vec3b>(i, j)[2] = 206;
                 }
                 else if(zoom3.at<uchar>(i, j) > 100) { //墙外
-                   color_map3.at<cv::Vec3b>(i, j)[0] = 241;
-	           color_map3.at<cv::Vec3b>(i, j)[1] = 119;
-	           color_map3.at<cv::Vec3b>(i, j)[2] = 160;
+                   color_map3.at<cv::Vec3b>(i, j)[0] = 255;
+	           color_map3.at<cv::Vec3b>(i, j)[1] = 255;
+	           color_map3.at<cv::Vec3b>(i, j)[2] = 255;
                 }
                 else { //墙体
-                   color_map3.at<cv::Vec3b>(i, j)[0] = 247;
-	           color_map3.at<cv::Vec3b>(i, j)[1] = 167;
-	           color_map3.at<cv::Vec3b>(i, j)[2] = 205;/*
+                   color_map3.at<cv::Vec3b>(i, j)[0] = 116;
+	           color_map3.at<cv::Vec3b>(i, j)[1] = 255;
+	           color_map3.at<cv::Vec3b>(i, j)[2] = 195;/*
                    cv::line(color_map3, cv::Point(j, i), cv::Point(j-1, i-1), cv::Scalar(247,167,205), 1, CV_AA);
                    cv::line(color_map3, cv::Point(j, i), cv::Point(j, i-1), cv::Scalar(247,167,205), 1, CV_AA);
                    cv::line(color_map3, cv::Point(j, i), cv::Point(j+1, i-1), cv::Scalar(247,167,205), 1, CV_AA);
@@ -971,34 +970,6 @@ void linear_fit1(int* x_pre, int* y_pre, int* x, int* y, int len) {
            else {
               x[i] = x_pre[i]; y[i] = y_pre[i];
            }
-
-           /*if(y_pre[i-2] == y_pre[i-1] && y_pre[i-1] == y_pre[i] && x_pre[i] == x_pre[i+1] && y_pre[i+1] == y_pre[i+2] && x_pre[i+2] == x_pre[i+3]) {
-              x[i+1] = x_pre[i+2]; 
-              y[i+1] = y_pre[i+1];
-              x[i] = x_pre[i+2]; 
-              y[i] = y_pre[i];
-           }
-
-           else if(x_pre[i-2] == x_pre[i-1] && y_pre[i-1] == y_pre[i] && x_pre[i] == x_pre[i+1] && y_pre[i+1] == y_pre[i+2] && y_pre[i+2] == y_pre[i+3]) {
-              x[i+1] = x_pre[i-1]; 
-              y[i+1] = y_pre[i+1];
-              x[i] = x_pre[i-1]; 
-              y[i] = y_pre[i];
-           }
-
-           else if(x_pre[i-2] == x_pre[i-1] && x_pre[i-1] == x_pre[i] && y_pre[i] == y_pre[i+1] && x_pre[i+1] == x_pre[i+2] && y_pre[i+2] == y_pre[i+3]) {
-              x[i+1] = x_pre[i+1]; 
-              y[i+1] = y_pre[i+2];
-              x[i] = x_pre[i]; 
-              y[i] = y_pre[i+2];
-           }
-
-           else if(y_pre[i-2] == y_pre[i-1] && x_pre[i-1] == x_pre[i] && y_pre[i] == y_pre[i+1] && x_pre[i+1] == x_pre[i+2] && x_pre[i+2] == x_pre[i+3]) {
-              x[i+1] = x_pre[i+1]; 
-              y[i+1] = y_pre[i-1];
-              x[i] = x_pre[i]; 
-              y[i] = y_pre[i-1];
-           }*/
        }
     }
 
@@ -1118,17 +1089,17 @@ cv::Mat Pathprocess(cv::Mat & src, int* path_x, int* path_y, int len, float x0, 
     cv::Mat src2 = cv::Mat::zeros(src.rows, src.cols, CV_8UC1);
     cvtColor(src, src2, cv::COLOR_BGR2GRAY);
 
-    cv::Mat bac = cv::Mat::zeros(1, 1, CV_8UC3);
-    bac.at<cv::Vec3b>(0, 0)[0] = 241;
-    bac.at<cv::Vec3b>(0, 0)[1] = 119;
-    bac.at<cv::Vec3b>(0, 0)[2] = 160;
+    /*cv::Mat bac = cv::Mat::zeros(1, 1, CV_8UC3);
+    bac.at<cv::Vec3b>(0, 0)[0] = 255;
+    bac.at<cv::Vec3b>(0, 0)[1] = 255;
+    bac.at<cv::Vec3b>(0, 0)[2] = 255;
     cv::Mat bac_gray = cv::Mat::zeros(1, 1, CV_8UC1);
-    cvtColor(bac, bac_gray, cv::COLOR_BGR2GRAY);
+    cvtColor(bac, bac_gray, cv::COLOR_BGR2GRAY);*/
 
     cv::Mat bar = cv::Mat::zeros(1, 1, CV_8UC3);
-    bar.at<cv::Vec3b>(0, 0)[0] = 245;
-    bar.at<cv::Vec3b>(0, 0)[1] = 81;
-    bar.at<cv::Vec3b>(0, 0)[2] = 116;
+    bar.at<cv::Vec3b>(0, 0)[0] = 143;
+    bar.at<cv::Vec3b>(0, 0)[1] = 255;
+    bar.at<cv::Vec3b>(0, 0)[2] = 206;
     cv::Mat bar_gray = cv::Mat::zeros(1, 1, CV_8UC1);
     cvtColor(bar, bar_gray, cv::COLOR_BGR2GRAY);
 
@@ -1172,7 +1143,7 @@ cv::Mat Pathprocess(cv::Mat & src, int* path_x, int* path_y, int len, float x0, 
 
     }
     
-    int up_src2 = 0, down_src2 = src2.rows-1, left_src2 = 0, right_src2 = src2.cols-1;
+    /*int up_src2 = 0, down_src2 = src2.rows-1, left_src2 = 0, right_src2 = src2.cols-1;
     int flag_up = 0;
     for(int i = 0; i < src2.rows; ++i) {
         for(int j = 0; j < src2.cols; ++j) {
@@ -1209,24 +1180,24 @@ cv::Mat Pathprocess(cv::Mat & src, int* path_x, int* path_y, int len, float x0, 
     src3 = src(cv::Range(up_src2, down_src2+1), cv::Range(left_src2, right_src2+1));
 
     //添加最后一行、最后一列
-    cv::Mat last_row(10, right_src2-left_src2+1, CV_8UC3, Scalar(241, 119, 160));
+    cv::Mat last_row(10, right_src2-left_src2+1, CV_8UC3, Scalar(255, 255, 255));
     src3.push_back(last_row); //行: down_src2-up_src2+6，列: right_src2-left_src2+1
     src3 = src3.t(); //行: right_src2-left_src2+1，列: down_src2-up_src2+6
-    cv::Mat last_col(10, down_src2-up_src2+11, CV_8UC3, Scalar(241, 119, 160));
+    cv::Mat last_col(10, down_src2-up_src2+11, CV_8UC3, Scalar(255, 255, 255));
     src3.push_back(last_col); //行: right_src2-left_src2+6，列: down_src2-up_src2+6
     src3 = src3.t(); //行: down_src2-up_src2+6，列: right_src2-left_src2+6
     flip(src3, src3, -1);
 
     //添加第一行、第一列
-    cv::Mat first_row(10, right_src2-left_src2+11, CV_8UC3, Scalar(241, 119, 160));
+    cv::Mat first_row(10, right_src2-left_src2+11, CV_8UC3, Scalar(255, 255, 255));
     src3.push_back(first_row); //行: down_src2-up_src2+11，列: right_src2-left_src2+6
     src3 = src3.t(); //行: right_src2-left_src2+6，列: down_src2-up_src2+11
-    cv::Mat first_col(10, down_src2-up_src2+21, CV_8UC3, Scalar(241, 119, 160));
+    cv::Mat first_col(10, down_src2-up_src2+21, CV_8UC3, Scalar(255, 255, 255));
     src3.push_back(first_col); //行: right_src2-left_src2+11，列: down_src2-up_src2+11
     src3 = src3.t(); //行: down_src2-up_src2+11，列: right_src2-left_src2+11
-    flip(src3, src3, -1);
+    flip(src3, src3, -1);*/
 
-    return src3;
+    return src;
 }
 
 struct Coor_point{
@@ -1260,21 +1231,21 @@ Coor_point Endpoint(cv::Mat & src, int* path_x, int* path_y, int len, float x0, 
     cv::Mat src2 = cv::Mat::zeros(src.rows, src.cols, CV_8UC1);
     cvtColor(src, src2, cv::COLOR_BGR2GRAY);
 
-    cv::Mat bac = cv::Mat::zeros(1, 1, CV_8UC3);
-    bac.at<cv::Vec3b>(0, 0)[0] = 241;
-    bac.at<cv::Vec3b>(0, 0)[1] = 119;
-    bac.at<cv::Vec3b>(0, 0)[2] = 160;
+    /*cv::Mat bac = cv::Mat::zeros(1, 1, CV_8UC3);
+    bac.at<cv::Vec3b>(0, 0)[0] = 255;
+    bac.at<cv::Vec3b>(0, 0)[1] = 255;
+    bac.at<cv::Vec3b>(0, 0)[2] = 255;
     cv::Mat bac_gray = cv::Mat::zeros(1, 1, CV_8UC1);
-    cvtColor(bac, bac_gray, cv::COLOR_BGR2GRAY);
+    cvtColor(bac, bac_gray, cv::COLOR_BGR2GRAY);*/
 
     cv::Mat bar = cv::Mat::zeros(1, 1, CV_8UC3);
-    bar.at<cv::Vec3b>(0, 0)[0] = 245;
-    bar.at<cv::Vec3b>(0, 0)[1] = 81;
-    bar.at<cv::Vec3b>(0, 0)[2] = 116;
+    bar.at<cv::Vec3b>(0, 0)[0] = 143;
+    bar.at<cv::Vec3b>(0, 0)[1] = 255;
+    bar.at<cv::Vec3b>(0, 0)[2] = 206;
     cv::Mat bar_gray = cv::Mat::zeros(1, 1, CV_8UC1);
     cvtColor(bar, bar_gray, cv::COLOR_BGR2GRAY);
 
-    int up_src2 = 0, down_src2 = src2.rows-1, left_src2 = 0, right_src2 = src2.cols-1;
+    /*int up_src2 = 0, down_src2 = src2.rows-1, left_src2 = 0, right_src2 = src2.cols-1;
     int flag_up = 0;
     for(int i = 0; i < src2.rows; ++i) {
         for(int j = 0; j < src2.cols; ++j) {
@@ -1305,7 +1276,7 @@ Coor_point Endpoint(cv::Mat & src, int* path_x, int* path_y, int len, float x0, 
             if(src2.at<uchar>(i, j) != bac_gray.at<uchar>(0, 0)) { right_src2 = j; flag_right = 1; break; }
         }
         if(flag_right == 1) break;
-    }
+    }*/
 
     struct Coor_point points;
     cv::Mat B_src2 = (src2 == bar_gray.at<uchar>(0, 0));
@@ -1318,15 +1289,16 @@ Coor_point Endpoint(cv::Mat & src, int* path_x, int* path_y, int len, float x0, 
     }
 
     else {
-       /*points.x1 = x[5]-(left_src2-1)+10;
-       points.y1 = y[5]-(up_src2-1)+10;
-       points.x2 = x[len-4]-(left_src2-1)+10;
-       points.y2 = y[len-4]-(up_src2-1)+10;*/
 
-       points.x1 = x_pix_row[5]-(left_src2-1)+10;
+       /*points.x1 = x_pix_row[5]-(left_src2-1)+10;
        points.y1 = y_pix_col[5]-(up_src2-1)+10;
        points.x2 = x_pix_row[len-4]-(left_src2-1)+10;
-       points.y2 = y_pix_col[len-4]-(up_src2-1)+10;
+       points.y2 = y_pix_col[len-4]-(up_src2-1)+10;*/
+
+       points.x1 = x_pix_row[5];
+       points.y1 = y_pix_col[5];
+       points.x2 = x_pix_row[len-4];
+       points.y2 = y_pix_col[len-4];
     }
     
     return points;
@@ -1368,7 +1340,44 @@ cv::Mat Geo(int* data, int width, int height, int* path_x, int* path_y, int len,
     cv::Mat zoom = Geo_area(data, width, height, path_x, path_y, len, x0, y0, f);
     cv::Mat src3 = Pathprocess(zoom, path_x, path_y, len, x0, y0, f);
 
-    return src3;
+    /*cv::Mat asrc = cv::Mat::zeros(src3.rows, src3.cols, CV_8UC4);
+    cv::Mat a(src3.rows, src3.cols, CV_8UC1, Scalar(180));
+
+    Mat in[] = {src3, a};
+    int from_To[] = {0,0, 1,1, 2,2, 3,3};
+    mixChannels(in, 2, &asrc, 1, from_To, 4);*/
+    
+    cv::Mat asrc = cv::Mat::zeros(src3.rows, src3.cols, CV_8UC4);
+    for(int i = 0; i < asrc.rows; ++i) {
+        for(int j = 0; j < asrc.cols; ++j) {
+
+            if(src3.at<cv::Vec3b>(i, j)[0] == 255 && src3.at<cv::Vec3b>(i, j)[1] == 255 && src3.at<cv::Vec3b>(i, j)[2] == 255) {
+
+               asrc.at<cv::Vec4b>(i, j)[0] = src3.at<cv::Vec3b>(i, j)[0];
+	       asrc.at<cv::Vec4b>(i, j)[1] = src3.at<cv::Vec3b>(i, j)[1];
+	       asrc.at<cv::Vec4b>(i, j)[2] = src3.at<cv::Vec3b>(i, j)[2];
+               asrc.at<cv::Vec4b>(i, j)[3] = 0x00;
+            }
+
+	    else if(src3.at<cv::Vec3b>(i, j)[0] == 143 && src3.at<cv::Vec3b>(i, j)[1] == 255 && src3.at<cv::Vec3b>(i, j)[2] == 206) {
+
+               asrc.at<cv::Vec4b>(i, j)[0] = src3.at<cv::Vec3b>(i, j)[0];
+	       asrc.at<cv::Vec4b>(i, j)[1] = src3.at<cv::Vec3b>(i, j)[1];
+	       asrc.at<cv::Vec4b>(i, j)[2] = src3.at<cv::Vec3b>(i, j)[2];
+               asrc.at<cv::Vec4b>(i, j)[3] = 0x5a;
+            }
+
+            else {
+
+               asrc.at<cv::Vec4b>(i, j)[0] = src3.at<cv::Vec3b>(i, j)[0];
+	       asrc.at<cv::Vec4b>(i, j)[1] = src3.at<cv::Vec3b>(i, j)[1];
+	       asrc.at<cv::Vec4b>(i, j)[2] = src3.at<cv::Vec3b>(i, j)[2];
+               asrc.at<cv::Vec4b>(i, j)[3] = 0xff;
+            }
+        }
+    }
+
+    return asrc;
 }
 
 Coor_point Coor(int* data, int width, int height, int* path_x, int* path_y, int len, float x0, float y0, float f)
@@ -1410,15 +1419,15 @@ int main()
     file_y >> path_y[len ++];
     file_y.close();
 
-    cv::Mat src3 = Geo(data, width, height, path_x, path_y, len, x0, y0, 1);
+    cv::Mat asrc = Geo(data, width, height, path_x, path_y, len, x0, y0, 1);
+
     Coor_point points = Coor(data, width, height, path_x, path_y, len, x0, y0, 1);
 
-    imshow("src3", src3);
-    //imwrite("test_f4_path19-2.bmp", src3);
+    imshow("asrc", asrc);
+    imwrite("to_argb.png", asrc);
 
     cvWaitKey(0);
 
     return 0;
 }
-
 
