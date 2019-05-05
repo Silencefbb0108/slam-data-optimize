@@ -6,4 +6,7 @@ gcc -o hello hello.cpp -L /usr/lib/x86_64-linux-gnu/ -lcairo -I /usr/include/cai
 find /usr/include -name cairo.h
 find /usr/local/include -name cairo.h
 find /usr/lib -name *cairo*
-g++ test_f4_path1106-4.cpp `pkg-config opencv --libs --cflags opencv` -o test_f4_path1106-4 -I/usr/include/cairo -L/usr/lib/x86_64-linux-gnu -lcairo
+g++ hello.cpp `pkg-config opencv --libs --cflags opencv` -o hello -I/usr/include/cairo -L/usr/lib/x86_64-linux-gnu -lcairo
+
+sudo apt-get clean
+sudo apt-get autoremove
