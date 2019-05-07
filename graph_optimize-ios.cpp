@@ -229,6 +229,30 @@ cv::Mat Geo_area(int* data, int width, int height, int* path_x, int* path_y, int
             if(y_pix_col2[i] > v_max2 && i != 0) {h8 = i; v_max2 = y_pix_col2[i];}
         }
 
+	if(y_pix_col2[h5] < 0) y_pix_col2[h5] = 0;
+	else if(y_pix_col2[h5] > src.rows-1) y_pix_col2[h5] = src.rows-1;
+
+	if(x_pix_row2[h5] < 0) x_pix_row2[h5] = 0;
+	else if(x_pix_row2[h5] > src.cols-1) x_pix_row2[h5] = src.cols-1;
+
+	if(y_pix_col2[h6] < 0) y_pix_col2[h6] = 0;
+	else if(y_pix_col2[h6] > src.rows-1) y_pix_col2[h6] = src.rows-1;
+
+	if(x_pix_row2[h6] < 0) x_pix_row2[h6] = 0;
+	else if(x_pix_row2[h6] > src.cols-1) x_pix_row2[h6] = src.cols-1;
+
+	if(y_pix_col2[h7] < 0) y_pix_col2[h7] = 0;
+	else if(y_pix_col2[h7] > src.rows-1) y_pix_col2[h7] = src.rows-1;
+
+	if(x_pix_row2[h7] < 0) x_pix_row2[h7] = 0;
+	else if(x_pix_row2[h7] > src.cols-1) x_pix_row2[h7] = src.cols-1;
+
+	if(y_pix_col2[h8] < 0) y_pix_col2[h8] = 0;
+	else if(y_pix_col2[h8] > src.rows-1) y_pix_col2[h8] = src.rows-1;
+
+	if(x_pix_row2[h8] < 0) x_pix_row2[h8] = 0;
+	else if(x_pix_row2[h8] > src.cols-1) x_pix_row2[h8] = src.cols-1;
+
         cv::Mat blank_area = cv::Mat::zeros(src.size(), CV_8UC1);
         for(int i = 0; i < src.rows; i ++) {
             for(int j = 0; j < src.cols; j ++) {
@@ -950,11 +974,19 @@ Coor_point Geo(int* data, int width, int height, int* path_x, int* path_y, int l
                asrc.at<cv::Vec4b>(i, j)[3] = 0x5a;
             }
 
-            else {
+            else if(src3.at<cv::Vec3b>(i, j)[0] == 116 && src3.at<cv::Vec3b>(i, j)[1] == 255 && src3.at<cv::Vec3b>(i, j)[2] == 195) {
 
                asrc.at<cv::Vec4b>(i, j)[0] = src3.at<cv::Vec3b>(i, j)[0];
 	       asrc.at<cv::Vec4b>(i, j)[1] = src3.at<cv::Vec3b>(i, j)[1];
 	       asrc.at<cv::Vec4b>(i, j)[2] = src3.at<cv::Vec3b>(i, j)[2];
+               asrc.at<cv::Vec4b>(i, j)[3] = 0xff;
+            }
+
+	    else {
+
+               asrc.at<cv::Vec4b>(i, j)[0] = 181;
+	       asrc.at<cv::Vec4b>(i, j)[1] = 233;
+	       asrc.at<cv::Vec4b>(i, j)[2] = 215;
                asrc.at<cv::Vec4b>(i, j)[3] = 0xff;
             }
         }
@@ -965,3 +997,4 @@ Coor_point Geo(int* data, int width, int height, int* path_x, int* path_y, int l
     Coor_point points = Endpoint(zoom, path_x, path_y, len, x0, y0, f);
     return points;
 }
+
