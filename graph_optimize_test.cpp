@@ -2,15 +2,311 @@
 #include <opencv2/core/core.hpp>
 #include <opencv2/highgui/highgui.hpp>
 #include <opencv2/imgproc/imgproc.hpp>
-#include <iostream>
-#include <cmath>
-#include <fstream>
+#include <bits/stdc++.h>
+#include <math.h>
+
 using namespace std;
 using namespace cv;
 
 #define MAXN 90000
 
 #define PI 3.1415926535897932384626
+
+cv::Mat houghTransform(cv::Mat & src) {
+
+    cv::Mat res = cv::Mat::zeros(src.rows, src.cols, CV_8UC3);
+    //cvtColor(src, res, COLOR_GRAY2BGR);
+    
+    //src: 8-bit单通道二值图像
+    //lines: 4元素向量(x_1,y_1,x_2,y_2)，(x_1,y_1)和(x_2, y_2)表示线段的两个端点
+    //rho = 1(以像素为单位), theta = CV_PI/180(以弧度为单位): 极坐系中r和θ的分辨率
+    //threshold: 大于阈值threshold的线段才能够被检測出，threshold值越大，所检测出的直线越少，threshold值越小，所检测出的直线越多
+    //minLineLength: 线段的最小长度，小于设定参数的线段被舍弃，显然该值越大，所检测出的直线越少，该值越小，所检测出的直线越多
+    //maxLineGap: 同一直线上的点与点之间被连接的最大间隙
+    vector<Vec4i> lines;
+    HoughLinesP(src, lines, 1, CV_PI/180, 16, 8, 6);
+    
+    for( size_t i = 0; i < lines.size(); i++ ){
+        cv::line(res, cv::Point(lines[i][0], lines[i][1]), cv::Point(lines[i][2], lines[i][3]), cv::Scalar(255,255,255), 2, 8);
+        //cout << lines[i][1] << "," << lines[i][0] << " " << lines[i][3] << "," << lines[i][2] << endl; //0-1-2-3: col-row-col-row
+    }
+    
+    for(size_t i = 0; i < lines.size()-1; i++){
+        for(size_t j = i+1; j < lines.size(); j++){
+            if((abs(lines[i][1]-lines[j][1]) <= 3 && abs(lines[i][0]-lines[j][0]) < 7) || (abs(lines[i][1]-lines[j][1]) < 7 && abs(lines[i][0]-lines[j][0]) <= 3)){
+               cv::line(res, cv::Point(lines[i][0], lines[i][1]), cv::Point(lines[j][0], lines[j][1]), cv::Scalar(255,255,255), 2, 8);
+               //cout << lines[i][1] << "," << lines[i][0] << " " << lines[j][1] << "," << lines[j][0] << endl;
+            }
+            else if((abs(lines[i][1]-lines[j][3]) <= 3 && abs(lines[i][0]-lines[j][2]) < 7) || (abs(lines[i][1]-lines[j][3]) < 7 && abs(lines[i][0]-lines[j][2]) <= 3)){
+               cv::line(res, cv::Point(lines[i][0], lines[i][1]), cv::Point(lines[j][2], lines[j][3]), cv::Scalar(255,255,255), 2, 8);
+               //cout << lines[i][1] << "," << lines[i][0] << " " << lines[j][3] << "," << lines[j][2] << endl;
+            }
+            else if((abs(lines[i][3]-lines[j][1]) <= 3 && abs(lines[i][2]-lines[j][0]) < 7) || (abs(lines[i][3]-lines[j][1]) < 7 && abs(lines[i][2]-lines[j][0]) <= 3)){
+               cv::line(res, cv::Point(lines[i][2], lines[i][3]), cv::Point(lines[j][0], lines[j][1]), cv::Scalar(255,255,255), 2, 8);
+               //cout << lines[i][3] << "," << lines[i][2] << " " << lines[j][1] << "," << lines[j][0] << endl;
+            }
+            else if((abs(lines[i][3]-lines[j][3]) <= 3 && abs(lines[i][2]-lines[j][2]) < 7) || (abs(lines[i][3]-lines[j][3]) < 7 && abs(lines[i][2]-lines[j][2]) <= 3)){
+               cv::line(res, cv::Point(lines[i][2], lines[i][3]), cv::Point(lines[j][2], lines[j][3]), cv::Scalar(255,255,255), 2, 8);
+               //cout << lines[i][3] << "," << lines[i][2] << " " << lines[j][3] << "," << lines[j][2] << endl;
+            }
+        }
+    }
+
+    cv::Mat res2 = cv::Mat::zeros(src.rows, src.cols, CV_8UC1);
+    cvtColor(res, res2, COLOR_BGR2GRAY);
+
+    return res2;
+}
+
+/*
+* @brief 对输入图像进行细化, 骨骼化
+* @param src为输入图像,用cvThreshold函数处理过的8位灰度图像格式，元素中只有0与1, 1代表有元素，0代表为空白
+* @param maxIterations限制迭代次数，如果不进行限制，默认为-1，代表不限制迭代次数，直到获得最终结果
+* @return 为对src细化后的输出图像, 格式与src格式相同，元素中只有0与1, 1代表有元素，0代表为空白
+*/
+
+cv::Mat thinImage(const cv::Mat & src, const int maxIterations = -1) {
+
+    assert(src.type() == CV_8UC1);
+    cv::Mat dst;
+    int width = src.cols;
+    int height = src.rows;
+    src.copyTo(dst);
+    int count = 0;  //记录迭代次数  
+    while (true)
+    {
+	count++;
+	if (maxIterations != -1 && count > maxIterations) //限制次数并且迭代次数到达
+	    break;
+	std::vector<uchar *> mFlag; //用于标记需要删除的点  
+	//对点标记  
+	for (int i = 0; i < height; ++i)
+	{
+	     uchar * p = dst.ptr<uchar>(i);
+	     for (int j = 0; j < width; ++j)
+	     {
+		 //如果满足四个条件，进行标记  
+		 //  p9 p2 p3  
+		 //  p8 p1 p4  
+		 //  p7 p6 p5  
+		 uchar p1 = p[j];
+		 if (p1 != 1) continue;
+		 uchar p4 = (j == width - 1) ? 0 : *(p + j + 1);
+		 uchar p8 = (j == 0) ? 0 : *(p + j - 1);
+		 uchar p2 = (i == 0) ? 0 : *(p - dst.step + j);
+		 uchar p3 = (i == 0 || j == width - 1) ? 0 : *(p - dst.step + j + 1);
+		 uchar p9 = (i == 0 || j == 0) ? 0 : *(p - dst.step + j - 1);
+		 uchar p6 = (i == height - 1) ? 0 : *(p + dst.step + j);
+		 uchar p5 = (i == height - 1 || j == width - 1) ? 0 : *(p + dst.step + j + 1);
+		 uchar p7 = (i == height - 1 || j == 0) ? 0 : *(p + dst.step + j - 1);
+		 if ((p2 + p3 + p4 + p5 + p6 + p7 + p8 + p9) >= 2 && (p2 + p3 + p4 + p5 + p6 + p7 + p8 + p9) <= 6)
+		 {
+		     int ap = 0;
+		     if (p2 == 0 && p3 == 1) ++ap;
+		     if (p3 == 0 && p4 == 1) ++ap;
+		     if (p4 == 0 && p5 == 1) ++ap;
+		     if (p5 == 0 && p6 == 1) ++ap;
+		     if (p6 == 0 && p7 == 1) ++ap;
+		     if (p7 == 0 && p8 == 1) ++ap;
+		     if (p8 == 0 && p9 == 1) ++ap;
+		     if (p9 == 0 && p2 == 1) ++ap;
+ 
+		     if (ap == 1 && p2 * p4 * p6 == 0 && p4 * p6 * p8 == 0)
+		     {
+			 //标记  
+			 mFlag.push_back(p + j);
+		     }
+		 }
+	     }
+        }
+ 
+	//将标记的点删除  
+	for (std::vector<uchar *>::iterator i = mFlag.begin(); i != mFlag.end(); ++i)
+	{
+	     **i = 0;
+	}
+ 
+	//直到没有点满足，算法结束  
+	if (mFlag.empty())
+	{
+	    break;
+	}
+	else
+	{
+	    mFlag.clear();//将mFlag清空  
+	}
+ 
+	//对点标记  
+	for (int i = 0; i < height; ++i)
+	{
+	     uchar * p = dst.ptr<uchar>(i);
+	     for (int j = 0; j < width; ++j)
+	     {
+		  //如果满足四个条件，进行标记  
+		  //  p9 p2 p3  
+		  //  p8 p1 p4  
+		  //  p7 p6 p5  
+		  uchar p1 = p[j];
+		  if (p1 != 1) continue;
+		  uchar p4 = (j == width - 1) ? 0 : *(p + j + 1);
+		  uchar p8 = (j == 0) ? 0 : *(p + j - 1);
+		  uchar p2 = (i == 0) ? 0 : *(p - dst.step + j);
+	          uchar p3 = (i == 0 || j == width - 1) ? 0 : *(p - dst.step + j + 1);
+		  uchar p9 = (i == 0 || j == 0) ? 0 : *(p - dst.step + j - 1);
+		  uchar p6 = (i == height - 1) ? 0 : *(p + dst.step + j);
+		  uchar p5 = (i == height - 1 || j == width - 1) ? 0 : *(p + dst.step + j + 1);
+		  uchar p7 = (i == height - 1 || j == 0) ? 0 : *(p + dst.step + j - 1);
+ 
+		  if ((p2 + p3 + p4 + p5 + p6 + p7 + p8 + p9) >= 2 && (p2 + p3 + p4 + p5 + p6 + p7 + p8 + p9) <= 6)
+		  {
+		      int ap = 0;
+		      if (p2 == 0 && p3 == 1) ++ap;
+		      if (p3 == 0 && p4 == 1) ++ap;
+		      if (p4 == 0 && p5 == 1) ++ap;
+		      if (p5 == 0 && p6 == 1) ++ap;
+		      if (p6 == 0 && p7 == 1) ++ap;
+		      if (p7 == 0 && p8 == 1) ++ap;
+		      if (p8 == 0 && p9 == 1) ++ap;
+		      if (p9 == 0 && p2 == 1) ++ap;
+ 
+		      if (ap == 1 && p2 * p4 * p8 == 0 && p2 * p6 * p8 == 0)
+		      {
+			  //标记
+			  mFlag.push_back(p + j);
+		      }
+		  }
+	     }
+	}
+ 
+	//将标记的点删除  
+	for (std::vector<uchar *>::iterator i = mFlag.begin(); i != mFlag.end(); ++i)
+	{
+	     **i = 0;
+	}
+ 
+	//直到没有点满足，算法结束  
+	if (mFlag.empty())
+	{
+	    break;
+	}
+	else
+	{
+	    mFlag.clear();//将mFlag清空  
+	}
+    }
+    dst = dst * 255;
+
+    return dst;
+}
+
+//去除二值图像边缘的突出部
+//uthreshold、vthreshold分别表示突出部的宽度阈值和高度阈值
+//type代表突出部的颜色，0表示黑色，1代表白色 
+void delete_jut(cv::Mat& src, cv::Mat& dst, int uthreshold, int vthreshold, int type) {
+
+    src.copyTo(dst);
+    int height = dst.rows;
+    int width = dst.cols;
+    int k;  //用于循环计数传递到外部
+    for (int i = 0; i < height - 1; i++)
+    {
+	uchar* p = dst.ptr<uchar>(i);
+	for (int j = 0; j < width - 1; j++)
+	{
+	    if (type == 0)
+	    {
+		//行消除
+		if (p[j] == 255 && p[j + 1] == 0)
+		{
+		    if (j + uthreshold >= width)
+		    {
+			for (k = j + 1; k < width; k++)
+			    p[k] = 255;
+		    }
+		    else
+		    {
+			for (k = j + 2; k <= j + uthreshold; k++)
+			{
+			    if (p[k] == 255) break;
+			}
+			if (p[k] == 255)
+			{
+			    for (int h = j + 1; h < k; h++)
+				p[h] = 255;
+			}
+		    }
+		}
+		//列消除
+		if (p[j] == 255 && p[j + width] == 0)
+		{
+		    if (i + vthreshold >= height)
+		    {
+			for (k = j + width; k < j + (height - i)*width; k += width)
+			    p[k] = 255;
+		    }
+		    else
+		    {
+			for (k = j + 2 * width; k <= j + vthreshold*width; k += width)
+			{
+			    if (p[k] == 255) break;
+			}
+			if (p[k] == 255)
+			{
+			    for (int h = j + width; h < k; h += width)
+				p[h] = 255;
+			}
+		    }
+		}
+	    }
+	    else  //type = 1
+	    {
+		//行消除
+		if (p[j] == 0 && p[j + 1] == 255)
+		{
+		    if (j + uthreshold >= width)
+		    {
+			for (k = j + 1; k < width; k++)
+			    p[k] = 0;
+		    }
+		    else
+		    {
+			for (k = j + 2; k <= j + uthreshold; k++)
+			{
+			    if (p[k] == 0) break;
+			}
+			if (p[k] == 0)
+			{
+			    for (int h = j + 1; h < k; h++)
+				p[h] = 0;
+			}
+		    }
+		}
+		//列消除
+		if (p[j] == 0 && p[j + width] == 255)
+		{
+		    if (i + vthreshold >= height)
+		    {
+			for (k = j + width; k < j + (height - i)*width; k += width)
+			    p[k] = 0;
+		    }
+		    else
+		    {
+			for (k = j + 2 * width; k <= j + vthreshold*width; k += width)
+			{
+			    if (p[k] == 0) break;
+			}
+		        if (p[k] == 0)
+			{
+			    for (int h = j + width; h < k; h += width)
+				p[h] = 0;
+			}
+		    }
+		}
+	    }
+	}
+    }
+
+}
 
 //CheckMode: 0代表去除黑区域，1代表去除白区域; NeihborMode：0代表4邻域，1代表8邻域;  
 void RemoveSmallRegion(cv::Mat& Src, cv::Mat& Dst, int AreaLimit, int CheckMode, int NeihborMode)  
@@ -157,6 +453,10 @@ void imfillholes(cv::Mat &src)
     contours.clear();
     hierarchy.clear();
 }
+
+/*腐蚀和膨胀是对白色部分（高亮部分）而言，不是黑色部分。
+  膨胀是对图像高亮部分进行膨胀，效果图拥有比原图更大的高亮区域。
+  腐蚀是对图像高亮部分进行腐蚀，效果图拥有比原图更小的高亮区域。*/
 
 cv::Mat Geo_area(int* data, int width, int height, int* path_x, int* path_y, int len, float x0, float y0, float f) {
 
