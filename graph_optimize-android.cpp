@@ -19,6 +19,115 @@ static string str;
 namespace GRAPH_OPTIMIZE
 {
 
+	//去除二值图像边缘的突出部
+	//uthreshold、vthreshold分别表示突出部的宽度阈值和高度阈值
+	//type代表突出部的颜色，0表示黑色，1代表白色 
+	void CGraphOptimize::delete_jut(cv::Mat& src, cv::Mat& dst, int uthreshold, int vthreshold, int type) {
+
+	    src.copyTo(dst);
+	    int height = dst.rows;
+	    int width = dst.cols;
+	    int k;  //用于循环计数传递到外部
+	    for (int i = 0; i < height - 1; i++)
+	    {
+		uchar* p = dst.ptr<uchar>(i);
+		for (int j = 0; j < width - 1; j++)
+		{
+		    if (type == 0)
+		    {
+			//行消除
+			if (p[j] == 255 && p[j + 1] == 0)
+			{
+			    if (j + uthreshold >= width)
+			    {
+				for (k = j + 1; k < width; k++)
+				    p[k] = 255;
+			    }
+			    else
+			    {
+				for (k = j + 2; k <= j + uthreshold; k++)
+				{
+				    if (p[k] == 255) break;
+				}
+				if (p[k] == 255)
+				{
+				    for (int h = j + 1; h < k; h++)
+					p[h] = 255;
+				}
+			    }
+			}
+			//列消除
+			if (p[j] == 255 && p[j + width] == 0)
+			{
+			    if (i + vthreshold >= height)
+			    {
+				for (k = j + width; k < j + (height - i)*width; k += width)
+				    p[k] = 255;
+			    }
+			    else
+			    {
+				for (k = j + 2 * width; k <= j + vthreshold*width; k += width)
+				{
+				    if (p[k] == 255) break;
+				}
+				if (p[k] == 255)
+				{
+				    for (int h = j + width; h < k; h += width)
+					p[h] = 255;
+				}
+			    }
+			}
+		    }
+		    else  //type = 1
+		    {
+			//行消除
+			if (p[j] == 0 && p[j + 1] == 255)
+			{
+			    if (j + uthreshold >= width)
+			    {
+				for (k = j + 1; k < width; k++)
+				    p[k] = 0;
+			    }
+			    else
+			    {
+				for (k = j + 2; k <= j + uthreshold; k++)
+				{
+				    if (p[k] == 0) break;
+				}
+				if (p[k] == 0)
+				{
+				    for (int h = j + 1; h < k; h++)
+					p[h] = 0;
+				}
+			    }
+			}
+			//列消除
+			if (p[j] == 0 && p[j + width] == 255)
+			{
+			    if (i + vthreshold >= height)
+			    {
+				for (k = j + width; k < j + (height - i)*width; k += width)
+				    p[k] = 0;
+			    }
+			    else
+			    {
+				for (k = j + 2 * width; k <= j + vthreshold*width; k += width)
+				{
+				    if (p[k] == 0) break;
+				}
+				if (p[k] == 0)
+				{
+				    for (int h = j + width; h < k; h += width)
+					p[h] = 0;
+				}
+			    }
+			}
+		    }
+		}
+	    }
+
+	}
+
 	//CheckMode: 0代表去除黑区域，1代表去除白区域; NeihborMode：0代表4邻域，1代表8邻域;
 	void CGraphOptimize::RemoveSmallRegion(cv::Mat& Src, cv::Mat& Dst, int AreaLimit, int CheckMode, int NeihborMode)
 	{
@@ -166,7 +275,7 @@ namespace GRAPH_OPTIMIZE
 	    hierarchy.clear();
 	}
 
-	cv::Mat CGraphOptimize::Geo_area(int* data, int width, int height, int* path_x, int* path_y, int len, float x0, float y0, float f) {
+	cv::Mat CGraphOptimize::Geo_area(int* data, int width, int height, int* path_xx, int* path_yy, int lenxy, float x0, float y0, float f, bool NY) {
 
 	    cv::Mat src = cv::Mat::zeros(height, width, CV_8UC1);
 	    for(int i = 0; i < src.rows; ++i) {
@@ -216,6 +325,32 @@ namespace GRAPH_OPTIMIZE
 
 		cv::Mat labels2, stats2, centroids2;
 		int nccomps2 = cv::connectedComponentsWithStats(src3, labels2, stats2, centroids2, 4); //连通域分析，src3为8位单通道二值图像
+
+		int len;
+		int path_x[lenxy], path_y[lenxy];
+		memset(path_x, 0, sizeof(path_x));
+	        memset(path_y, 0, sizeof(path_y));
+
+		if(NY == 1) {
+
+		   len = lenxy - 6;
+
+		   for(int i = 0; i < len; ++i) {
+
+		       path_x[i] = path_xx[i+6];
+		       path_y[i] = path_yy[i+6];
+		   }
+		}
+		else {
+
+		   len = lenxy - 4;
+
+		   for(int i = 0; i < len; ++i) {
+
+		       path_x[i] = path_xx[i+4];
+		       path_y[i] = path_yy[i+4];
+		   }
+		}
 
 		int x_row2[len], y_col2[len];
 		int x_pix_row2[len], y_pix_col2[len];
@@ -269,7 +404,8 @@ namespace GRAPH_OPTIMIZE
 		        if(labels2.at<int>(i, j) == labels2.at<int>(y_pix_col2[h5], x_pix_row2[h5]) || 
 		           labels2.at<int>(i, j) == labels2.at<int>(y_pix_col2[h6], x_pix_row2[h6]) || 
 		           labels2.at<int>(i, j) == labels2.at<int>(y_pix_col2[h7], x_pix_row2[h7]) || 
-		           labels2.at<int>(i, j) == labels2.at<int>(y_pix_col2[h8], x_pix_row2[h8])) {
+		           labels2.at<int>(i, j) == labels2.at<int>(y_pix_col2[h8], x_pix_row2[h8]) ||
+		   	   labels2.at<int>(i, j) == labels2.at<int>(y_pix_col2[len-4], x_pix_row2[len-4])) {
 		           blank_area.at<char>(i, j) = 255;
 		        }
 		    }
@@ -303,7 +439,8 @@ namespace GRAPH_OPTIMIZE
 		        if(labels3.at<int>(i, j) == labels3.at<int>(y_pix_col2[h5], x_pix_row2[h5]) || 
 		           labels3.at<int>(i, j) == labels3.at<int>(y_pix_col2[h6], x_pix_row2[h6]) || 
 		           labels3.at<int>(i, j) == labels3.at<int>(y_pix_col2[h7], x_pix_row2[h7]) || 
-		           labels3.at<int>(i, j) == labels3.at<int>(y_pix_col2[h8], x_pix_row2[h8])) {
+		           labels3.at<int>(i, j) == labels3.at<int>(y_pix_col2[h8], x_pix_row2[h8]) ||
+		   	   labels3.at<int>(i, j) == labels3.at<int>(y_pix_col2[len-4], x_pix_row2[len-4])) {
 		           blank_area2.at<char>(i, j) = 255;
 		        }
 		    }
@@ -465,9 +602,11 @@ namespace GRAPH_OPTIMIZE
 		cv::Mat BARRIER3 = cv::Mat::zeros(src.size(), CV_8UC1);
 		bitwise_and(BLANK2, BARRIER2, BARRIER3);
 		//imshow("BARRIER3", BARRIER3);
+		cv::Mat NOT_KNOWN0 = cv::Mat::zeros(src.size(), CV_8UC1);
+		bitwise_or(BLANK3, BARRIER3, NOT_KNOWN0);
+		//imshow("NOT_KNOWN0", NOT_KNOWN0);
 		cv::Mat NOT_KNOWN = cv::Mat::zeros(src.size(), CV_8UC1);
-		bitwise_or(BLANK3, BARRIER3, NOT_KNOWN);
-		//imshow("NOT_KNOWN", NOT_KNOWN);
+		delete_jut(NOT_KNOWN0, NOT_KNOWN, 5, 5, 1);
 		bitwise_and(NOT_KNOWN, ~BLAN_known_area2, NOT_KNOWN);
 		//imshow("NOT_KNOWN2", NOT_KNOWN);
 		//RemoveSmallRegion(NOT_KNOWN, NOT_KNOWN, 100, 0, 1);
@@ -727,7 +866,49 @@ namespace GRAPH_OPTIMIZE
 	    }
 	}
 
-	cv::Mat CGraphOptimize::Pathprocess(cv::Mat & src, int* path_x, int* path_y, int len, float x0, float y0, float f) {
+	cv::Mat CGraphOptimize::Pathprocess(cv::Mat & src, int* path_xx, int* path_yy, int lenxy, float x0, float y0, float f, bool NY) {
+
+	    int len;
+	    int path_x[lenxy], path_y[lenxy];
+	    memset(path_x, 0, sizeof(path_x));
+	    memset(path_y, 0, sizeof(path_y));
+
+	    int xx[2], yy[2];
+	    int xxx[2], yyy[2];
+
+	    memset(xx, 0, sizeof(xx));
+	    memset(yy, 0, sizeof(yy));
+	    memset(xxx, 0, sizeof(xxx));
+	    memset(yyy, 0, sizeof(yyy));
+
+	    if(NY == 1) {
+
+		for(int i = 0; i < 2; ++i) {
+
+		    xx[i] = int(path_xx[i+4]/5.0 - x0*20);
+		    yy[i] = int(path_yy[i+4]/5.0 - y0*20);
+		    xxx[i] = (4*f)*(src.cols/(4*f) - yy[i]);
+		    yyy[i] = (4*f)*(src.rows/(4*f) - xx[i]);
+		}
+
+		len = lenxy - 6;
+
+		for(int i = 0; i < len; ++i) {
+
+		    path_x[i] = path_xx[i+6];
+		    path_y[i] = path_yy[i+6];
+		}
+	    }
+	    else {
+
+		len = lenxy - 4;
+
+		for(int i = 0; i < len; ++i) {
+
+		    path_x[i] = path_xx[i+4];
+		    path_y[i] = path_yy[i+4];
+		}
+	    }
 
 	    int x_row[len], y_col[len];
 	    int x_pix_row[len], y_pix_col[len];
@@ -771,6 +952,11 @@ namespace GRAPH_OPTIMIZE
 
 	    cv::Mat B_src2 = (src2 == bar_gray.at<uchar>(0, 0));
 	    if(countNonZero(B_src2) != 0 && len > 9) {
+
+		if(NY == 1) {
+			cv::line(src, cv::Point(xxx[0], yyy[0]), cv::Point(xxx[1], yyy[1]), cv::Scalar(255,255,255), 2, CV_AA);
+			cv::line(src, cv::Point(xxx[1], yyy[1]), cv::Point(x[5], y[5]), cv::Scalar(255,255,255), 2, CV_AA);
+		}
 
 	       int ie = 5, je = 6, istart = 5, iend = 6;
 	       while(ie < len-4) {
@@ -867,7 +1053,33 @@ namespace GRAPH_OPTIMIZE
 	    return src3;
 	}
 
-	string CGraphOptimize::Endpoint(cv::Mat & src, int* path_x, int* path_y, int len, float x0, float y0, float f) {
+	string CGraphOptimize::Endpoint(cv::Mat & src, int* path_xx, int* path_yy, int lenxy, float x0, float y0, float f, bool NY) {
+
+	    int len;
+	    int path_x[lenxy], path_y[lenxy];
+	    memset(path_x, 0, sizeof(path_x));
+	    memset(path_y, 0, sizeof(path_y));
+
+	    if(NY == 1) {
+
+	       len = lenxy - 6;
+
+	       for(int i = 0; i < len; ++i) {
+
+		   path_x[i] = path_xx[i+6];
+		   path_y[i] = path_yy[i+6];
+	       }
+	    }
+	    else {
+
+	       len = lenxy - 4;
+
+	       for(int i = 0; i < len; ++i) {
+
+		   path_x[i] = path_xx[i+4];
+		   path_y[i] = path_yy[i+4];
+	       }
+	    }
 
 	    int x_row[len], y_col[len];
 	    int x_pix_row[len], y_pix_col[len];
@@ -991,11 +1203,11 @@ namespace GRAPH_OPTIMIZE
 	}
 
 
-	cv::Mat CGraphOptimize::Geo(int* data, int width, int height, int* path_x, int* path_y, int len, float x0, float y0, float f)
+	cv::Mat CGraphOptimize::Geo(int* data, int width, int height, int* path_xx, int* path_yy, int lenxy, float x0, float y0, float f, bool NY)
 	{
-	    cv::Mat zoom = Geo_area(data, width, height, path_x, path_y, len, x0, y0, f);
-            sep = Endpoint(zoom, path_x, path_y, len, x0, y0, f);
-            cv::Mat src3 = Pathprocess(zoom, path_x, path_y, len, x0, y0, f); 
+	    cv::Mat zoom = Geo_area(data, width, height, path_xx, path_yy, lenxy, x0, y0, f, NY);
+            sep = Endpoint(zoom, path_xx, path_yy, lenxy, x0, y0, f, NY);
+            cv::Mat src3 = Pathprocess(zoom, path_xx, path_yy, lenxy, x0, y0, f, NY); 
 
             cv::Mat asrc = cv::Mat::zeros(src3.rows, src3.cols, CV_8UC4);
 	    for(int i = 0; i < asrc.rows; ++i) {
