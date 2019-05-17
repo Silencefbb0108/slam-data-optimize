@@ -33,7 +33,7 @@ namespace GRAPH_OPTIMIZE
                 static string Endpoint(cv::Mat & src, int* path_x, int* path_y, int len, float x0, float y0, float f, bool NY);
                 static cv::Mat Geo(int* data, int width, int height, int* path_x, int* path_y, int len, float x0, float y0, float f, bool NY);
                 static string getPathPoint();
-		static String getOffset();
+		static string getOffset();
 	};
 
 }
