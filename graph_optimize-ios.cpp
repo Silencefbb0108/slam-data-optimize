@@ -9,7 +9,7 @@ using namespace std;
 using namespace cv;
 
 #define PI 3.1415926535897932384626
-#define mul 8
+#define mul 4
 
 //去除二值图像边缘的突出部
 //uthreshold、vthreshold分别表示突出部的宽度阈值和高度阈值
