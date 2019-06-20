@@ -12,6 +12,7 @@ using namespace std;
 using namespace cv;
 
 #define PI 3.1415926535897932384626
+#define mul 4
 
 static string sep;
 static string str;
@@ -290,7 +291,11 @@ namespace GRAPH_OPTIMIZE
 	    if(countNonZero(src2) == 0) {
 
 	       cv::Mat zoom;
-	       cv::resize(src, zoom, cv::Size(), 4*f, 4*f, cv::INTER_NEAREST);
+	       cv::resize(src, zoom, cv::Size(), mul*f, mul*f, cv::INTER_NEAREST);
+	       cv::medianBlur(zoom, zoom, 9);
+	       cv::medianBlur(zoom, zoom, 5);
+	       cv::medianBlur(zoom, zoom, 3);
+
 	       cv::Mat color_map = cv::Mat::zeros(zoom.size(), CV_8UC3);
 
 	       for(int i = 0; i < zoom.rows; ++i) {
@@ -450,9 +455,9 @@ namespace GRAPH_OPTIMIZE
 		BL_known_area2 = (80 <= known_area2 & known_area2 <= 100);
 		cv::Mat BLA_known_area2 = cv::Mat::zeros(src.size(), CV_8UC1);
 		bitwise_or(blank_area2, BL_known_area2, BLA_known_area2);
-		cv::Mat element2 = getStructuringElement(cv::MORPH_RECT, cv::Size(7, 7));
-		erode(BLA_known_area2, BLA_known_area2, element2);
-		dilate(BLA_known_area2, BLA_known_area2, element2);
+		//cv::Mat element2 = getStructuringElement(cv::MORPH_RECT, cv::Size(7, 7));
+		//erode(BLA_known_area2, BLA_known_area2, element2);
+		//dilate(BLA_known_area2, BLA_known_area2, element2);
 		cv::Mat BLAN_known_area2 = cv::Mat::zeros(src.size(), CV_8UC1);
 		bitwise_and(BLA_known_area2, src, BLAN_known_area2);
 		BLAN_known_area2 = ~BLAN_known_area2;
@@ -606,7 +611,7 @@ namespace GRAPH_OPTIMIZE
 		bitwise_or(BLANK3, BARRIER3, NOT_KNOWN0);
 		//imshow("NOT_KNOWN0", NOT_KNOWN0);
 		cv::Mat NOT_KNOWN = cv::Mat::zeros(src.size(), CV_8UC1);
-		delete_jut(NOT_KNOWN0, NOT_KNOWN, 5, 5, 1);
+		delete_jut(NOT_KNOWN0, NOT_KNOWN, 3, 3, 1);
 		bitwise_and(NOT_KNOWN, ~BLAN_known_area2, NOT_KNOWN);
 		//imshow("NOT_KNOWN2", NOT_KNOWN);
 		//RemoveSmallRegion(NOT_KNOWN, NOT_KNOWN, 100, 0, 1);
@@ -651,7 +656,10 @@ namespace GRAPH_OPTIMIZE
 		}
 
 		cv::Mat zoom3;
-		cv::resize(NOT_KNOWN, zoom3, cv::Size(), 4*f, 4*f, cv::INTER_NEAREST);
+		cv::resize(NOT_KNOWN, zoom3, cv::Size(), mul*f, mul*f, cv::INTER_NEAREST);
+		cv::medianBlur(zoom3, zoom3, 9);
+		cv::medianBlur(zoom3, zoom3, 5);
+		cv::medianBlur(zoom3, zoom3, 3);
 
 		cv::Mat color_map3 = cv::Mat::zeros(zoom3.size(), CV_8UC3);
 
@@ -681,9 +689,9 @@ namespace GRAPH_OPTIMIZE
 	}
 
 	double CGraphOptimize::angle(int x1, int y1, int x2, int y2, int x3, int y3) {
-	    int aa = pow(x1 - x2, 2) + pow(y1 - y2, 2);
-	    int bb = pow(x3 - x2, 2) + pow(y3 - y2, 2);
-	    int cc = pow(x3 - x1, 2) + pow(y3 - y1, 2);
+	    double aa = pow(x1 - x2, 2) + pow(y1 - y2, 2);
+	    double bb = pow(x3 - x2, 2) + pow(y3 - y2, 2);
+	    double cc = pow(x3 - x1, 2) + pow(y3 - y1, 2);
 	    double C = acos((aa + bb - cc)/(2 * sqrt(aa) * sqrt(bb)));
 
 	    return C;
@@ -887,8 +895,8 @@ namespace GRAPH_OPTIMIZE
 
 		    xx[i] = int(path_xx[i+4]/5.0 - x0*20);
 		    yy[i] = int(path_yy[i+4]/5.0 - y0*20);
-		    xxx[i] = (4*f)*(src.cols/(4*f) - yy[i]);
-		    yyy[i] = (4*f)*(src.rows/(4*f) - xx[i]);
+		    xxx[i] = (mul*f)*(src.cols/(mul*f) - yy[i]);
+		    yyy[i] = (mul*f)*(src.rows/(mul*f) - xx[i]);
 		}
 
 		len = lenxy - 6;
@@ -921,8 +929,8 @@ namespace GRAPH_OPTIMIZE
 	    for(int i = 0; i < len; ++i) {
 		x_row[i] = int(path_x[i]/5.0 - x0*20);
 		y_col[i] = int(path_y[i]/5.0 - y0*20);
-		x_pix_row[i] = (4*f)*(src.cols/(4*f) - y_col[i]);
-		y_pix_col[i] = (4*f)*(src.rows/(4*f) - x_row[i]);
+		x_pix_row[i] = (mul*f)*(src.cols/(mul*f) - y_col[i]);
+		y_pix_col[i] = (mul*f)*(src.rows/(mul*f) - x_row[i]);
 
 	    }
 
@@ -1092,8 +1100,8 @@ namespace GRAPH_OPTIMIZE
 	    for(int i = 0; i < len; ++i) {
 		x_row[i] = int(path_x[i]/5.0 - x0*20);
 		y_col[i] = int(path_y[i]/5.0 - y0*20);
-		x_pix_row[i] = (4*f)*(src.cols/(4*f) - y_col[i]);
-		y_pix_col[i] = (4*f)*(src.rows/(4*f) - x_row[i]);
+		x_pix_row[i] = (mul*f)*(src.cols/(mul*f) - y_col[i]);
+		y_pix_col[i] = (mul*f)*(src.rows/(mul*f) - x_row[i]);
 	    }
 
 	    int x[len], y[len];
@@ -1244,7 +1252,7 @@ namespace GRAPH_OPTIMIZE
 		    }
 		}
 	    }
-
+	    cv::medianBlur(asrc, asrc, 3);
 	    return asrc;
 	}
 
