@@ -587,7 +587,7 @@ cv::Mat Geo_area(int* data, int width, int height, int* path_x, int* path_y, int
         B_known_area2 = (known_area2 < 80);
 
         cv::Mat labels3, stats3, centroids3;
-	int nccomps3 = cv::connectedComponentsWithStats(B_known_area2, labels3, stats3, centroids3, 4); //连通域分析，src3为8位单通道二值图像
+	int nccomps3 = cv::connectedComponentsWithStats(B_known_area2, labels3, stats3, centroids3, 4); //连通域分析，B_known_area2为8位单通道二值图像
 
         cv::Mat blank_area2 = cv::Mat::zeros(src.size(), CV_8UC1);
         for(int i = 0; i < src.rows; i ++) {
