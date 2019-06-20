@@ -721,6 +721,7 @@ cv::Mat Geo_area(int* data, int width, int height, int* path_x, int* path_y, int
         BLANK2 = (BLAN_known_area2 < 80);
         cv::Mat BLANK3 = cv::Mat::zeros(src.size(), CV_8UC1);
         BLANK2.copyTo(BLANK3);
+        //imshow("BLANK3", BLANK3);
 
         for(int i = 1; i < src.rows-1; ++i) {
             for(int j = 1; j < src.cols-1; ++j) {
@@ -750,7 +751,7 @@ cv::Mat Geo_area(int* data, int width, int height, int* path_x, int* path_y, int
                 }
             }
         }
-        //imshow("BLANK3", BLANK3);
+        //imshow("BLANK2", BLANK2);
 
         cv::Mat BARRIER2 = cv::Mat::zeros(src.size(), CV_8UC1);
         BARRIER2 = (80 <= BLAN_known_area2 & BLAN_known_area2 <= 100);
