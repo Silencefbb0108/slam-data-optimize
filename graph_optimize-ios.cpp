@@ -9,6 +9,7 @@ using namespace std;
 using namespace cv;
 
 #define PI 3.1415926535897932384626
+#define mul 8
 
 //去除二值图像边缘的突出部
 //uthreshold、vthreshold分别表示突出部的宽度阈值和高度阈值
@@ -280,7 +281,11 @@ cv::Mat Geo_area(int* data, int width, int height, int* path_xx, int* path_yy, i
     if(countNonZero(src2) == 0) {
 
        cv::Mat zoom;
-       cv::resize(src, zoom, cv::Size(), 4*f, 4*f, cv::INTER_NEAREST);
+       cv::resize(src, zoom, cv::Size(), mul*f, mul*f, cv::INTER_NEAREST);
+       cv::medianBlur(zoom, zoom, 9);
+       cv::medianBlur(zoom, zoom, 5);
+       cv::medianBlur(zoom, zoom, 3);
+
        cv::Mat color_map = cv::Mat::zeros(zoom.size(), CV_8UC3);
 
        for(int i = 0; i < zoom.rows; ++i) {
@@ -641,7 +646,10 @@ cv::Mat Geo_area(int* data, int width, int height, int* path_xx, int* path_yy, i
         }
 
         cv::Mat zoom3;
-        cv::resize(NOT_KNOWN, zoom3, cv::Size(), 4*f, 4*f, cv::INTER_NEAREST);
+        cv::resize(NOT_KNOWN, zoom3, cv::Size(), mul*f, mul*f, cv::INTER_NEAREST);
+	cv::medianBlur(zoom3, zoom3, 9);
+	cv::medianBlur(zoom3, zoom3, 5);
+	cv::medianBlur(zoom3, zoom3, 3);
 
         cv::Mat color_map3 = cv::Mat::zeros(zoom3.size(), CV_8UC3);
 
@@ -877,8 +885,8 @@ cv::Mat Pathprocess(cv::Mat & src, int* path_xx, int* path_yy, int lenxy, float 
 
 	    xx[i] = int(path_xx[i+4]/5.0 - x0*20);
 	    yy[i] = int(path_yy[i+4]/5.0 - y0*20);
-	    xxx[i] = (4*f)*(src.cols/(4*f) - yy[i]);
-	    yyy[i] = (4*f)*(src.rows/(4*f) - xx[i]);
+	    xxx[i] = (mul*f)*(src.cols/(mul*f) - yy[i]);
+	    yyy[i] = (mul*f)*(src.rows/(mul*f) - xx[i]);
 	}
 
 	len = lenxy - 6;
@@ -912,8 +920,8 @@ cv::Mat Pathprocess(cv::Mat & src, int* path_xx, int* path_yy, int lenxy, float 
 
         x_row[i] = int(path_x[i]/5.0 - x0*20);
         y_col[i] = int(path_y[i]/5.0 - y0*20);
-        x_pix_row[i] = (4*f)*(src.cols/(4*f) - y_col[i]);
-        y_pix_col[i] = (4*f)*(src.rows/(4*f) - x_row[i]);
+        x_pix_row[i] = (mul*f)*(src.cols/(mul*f) - y_col[i]);
+        y_pix_col[i] = (mul*f)*(src.rows/(mul*f) - x_row[i]);
     }
     
     int x[len], y[len];
@@ -1079,8 +1087,8 @@ Coor_point Endpoint(cv::Mat & src, int* path_xx, int* path_yy, int lenxy, float 
     for(int i = 0; i < len; ++i) {
         x_row[i] = int(path_x[i]/5.0 - x0*20);
         y_col[i] = int(path_y[i]/5.0 - y0*20);
-        x_pix_row[i] = (4*f)*(src.cols/(4*f) - y_col[i]);
-        y_pix_col[i] = (4*f)*(src.rows/(4*f) - x_row[i]);
+        x_pix_row[i] = (mul*f)*(src.cols/(mul*f) - y_col[i]);
+        y_pix_col[i] = (mul*f)*(src.rows/(mul*f) - x_row[i]);
     }
     
     int x[len], y[len];
@@ -1204,7 +1212,7 @@ Coor_point Geo(int* data, int width, int height, int* path_xx, int* path_yy, int
             }
         }
     }
-
+    cv::medianBlur(asrc, asrc, 3);
     bsrc = asrc;
 
     Coor_point points = Endpoint(zoom, path_xx, path_yy, lenxy, x0, y0, f, NY);
